@@ -111,12 +111,18 @@ brew install gcc@13 gcc@14
    pip install levseq
    ```
 
-4. Run LevSeq:
+4. Make bacoddes (see barcodes folder)
+   ```
+   python barcode_design_cli.py # With parameters
+   ```
+   Order these with IDT. Place barcodes in the barcodes folder --> see example.
+
+5. Run LevSeq:
    ```bash
    levseq my_experiment /path/to/data/ /path/to/ref.csv
    ```
 
-5. Combine function data:
+6. Combine function data:
    ```bash
    levseq my_experiment /path/to/data/ /path/to/ref.csv  "LCMS_file_{barcode1}.csv,LCMS_file_{barcode2}.csv," --smiles 'reaction_smiles_string' --compound "name_of_compound_in_LCMS_file" --variant_df "visualization_partial.csv"
    ```
