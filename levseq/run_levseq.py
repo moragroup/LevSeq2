@@ -75,6 +75,8 @@ def configure_logging(result_folder, cl_args):
         logging.info("Skipping variant calling step")
     if cl_args.get('threshold'):
         logging.info(f"Using variant threshold: {cl_args.get('threshold')}")
+    if cl_args.get('barcodes'):
+        logging.info(f"Using custom barcodes file: {cl_args.get('barcodes')}")
 
 # Create result folder
 def create_result_folder(cl_args):
@@ -168,19 +170,40 @@ def barcode_user(cl_args, i):
         logging.error("Demultiplex failed to execute for index {i}.", exc_info=True)
         raise
 
-def filter_bc(cl_args: dict, name_folder: Path, i: int) -> Path:
-    front_min, front_max, rbc = barcode_user(cl_args, i)
+def resolve_barcode_path(cl_args: dict) -> Path:
+    """Resolve the barcode FASTA path.
+
+    Priority:
+      1. User-supplied ``--barcodes`` CLI argument.
+      2. Packaged default ``levseq/barcoding/minion_barcodes.fasta``.
+    """
+    user_barcodes = cl_args.get("barcodes") if cl_args else None
+    if user_barcodes:
+        barcode_path = Path(user_barcodes).expanduser().resolve()
+        if not barcode_path.exists():
+            raise FileNotFoundError(
+                f"User-specified barcode file not found: {barcode_path}"
+            )
+        return barcode_path
+
     try:
         with resources.path('levseq.barcoding', 'minion_barcodes.fasta') as barcode_path:
             barcode_path = Path(barcode_path)
-    except ImportError:
+    except (ImportError, FileNotFoundError, ModuleNotFoundError):
         package_root = Path(__file__).resolve().parent.parent
         barcode_path = package_root / "levseq" / "barcoding" / "minion_barcodes.fasta"
+    return barcode_path
+
+
+def filter_bc(cl_args: dict, name_folder: Path, i: int) -> Path:
+    front_min, front_max, rbc = barcode_user(cl_args, i)
+    barcode_path = resolve_barcode_path(cl_args)
     if not barcode_path.exists():
         raise FileNotFoundError(f"Barcode file not found: {barcode_path}")
     front_prefix = "NB"
     back_prefix = "RB"
     barcode_path_filter = os.path.join(name_folder, "levseq_barcodes_filtered.fasta")
+    print(f"Filtering barcodes from {barcode_path} to {barcode_path_filter} with front range ({front_min}, {front_max}) and rbc {rbc}")
     filter_barcodes(
         str(barcode_path),
         str(barcode_path_filter),

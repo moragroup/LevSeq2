@@ -83,7 +83,11 @@ def build_cli_parser():
                             help="The compound in the fitness files (e.g. pDT or pdt - case sensitive).")     
     optional_args_group.add_argument("--variant_df",
                         default=None,
-                        help="The variant dataframe to combine with fitness data.")                                   
+                        help="The variant dataframe to combine with fitness data.")
+    optional_args_group.add_argument("--barcodes",
+                        default=None,
+                        help="Path to a custom barcodes FASTA file (forward 'NB' and reverse 'RB' records). "
+                             "Defaults to the bundled levseq/barcoding/minion_barcodes.fasta.")
     return parser
 
 

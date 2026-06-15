@@ -128,6 +128,10 @@ class VariantCaller:
                 return
 
             sam_path = os.path.join(output_dir, f"{alignment_name}.sam")
+            print('----------------------------------------')
+            print(self.template_fasta)
+            print('----------------------------------------')
+
             # Alignment using minimap2
             minimap_cmd = [
                 "minimap2", "-ax", "map-ont",
@@ -151,7 +155,7 @@ class VariantCaller:
                     minimap_result.stderr.strip(),
                 )
                 return
-            # print(minimap_cmd)
+            print(minimap_cmd)
             # Convert SAM to BAM
             unsorted_bam = os.path.join(output_dir, f"{alignment_name}.unsorted.bam")
             with open(unsorted_bam, "wb") as bam_handle:
@@ -230,19 +234,19 @@ class VariantCaller:
                     bam_file = os.path.join(row["Path"], f'{self.alignment_name}_{barcode_id}.bam')
 
                     # Check if alignment file exists, if not, align sequences
-                    if not os.path.exists(bam_file):
-                        logger.info(f"Aligning sequences for {row['Path']}")
-                        self._align_sequences(
-                            row["Path"],
-                            row['Barcodes'],
-                            alignment_name=f'{self.alignment_name}_{barcode_id}',
-                        )
-                    elif not os.path.exists(f"{bam_file}.bai"):
-                        subprocess.run(
-                            ["samtools", "index", bam_file],
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.DEVNULL,
-                        )
+                    #if not os.path.exists(bam_file):
+                    logger.info(f"Aligning sequences for {row['Path']}")
+                    self._align_sequences(
+                        row["Path"],
+                        row['Barcodes'],
+                        alignment_name=f'{self.alignment_name}_{barcode_id}',
+                    )
+                    # elif not os.path.exists(f"{bam_file}.bai"):
+                    #     subprocess.run(
+                    #         ["samtools", "index", bam_file],
+                    #         stdout=subprocess.DEVNULL,
+                    #         stderr=subprocess.DEVNULL,
+                    #     )
 
                     # Placeholder function calls to demonstrate workflow
                     well_df, alignment_count = get_reads_for_well(self.experiment_name, bam_file,
@@ -280,9 +284,13 @@ class VariantCaller:
         """
         self.variant_df['P value'] = float("nan")
         self.variant_df['Mixed Well'] = False
+        print(len(self.variant_df), num_threads)
+        size_df = len(self.variant_df)
         pool = ThreadPool(num_threads)
         data = []
-        num = int(len(self.variant_df) / num_threads)
+        num = int(size_df / num_threads)
+        if num < 1:
+            num = 1
         self.variant_df.reset_index(inplace=True)
         if num_threads > 1:
             for i in range(0, len(self.variant_df), num):

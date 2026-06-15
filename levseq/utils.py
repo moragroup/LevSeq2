@@ -280,7 +280,10 @@ def get_reads_for_well(parent_name, bam_file_path: str, ref_str: str, msa_path=N
     """
     Rows are the reads, columns are the columns in the reference. Insertions are ignored.
     """
+    print('----- get_reads_for_well', bam_file_path)
     bam = pysam.AlignmentFile(bam_file_path, "rb")
+    print('----- read bam')
+
     # Ensure the BAM file is indexed
     if not os.path.exists(bam_file_path + ".bai"):
         pysam.index(bam_file_path)
@@ -291,6 +294,12 @@ def get_reads_for_well(parent_name, bam_file_path: str, ref_str: str, msa_path=N
     insert_map = defaultdict(list)
     for read in bam.fetch(until_eof=True):
         # Ensure we have at least 75% coverage
+        if read.cigartuples is not None:
+            print(read.cigartuples)
+            print(read.query_sequence)
+        # if 'ATGGCTTTACAGGTAACTCTG' in read.query_sequence:
+        #     print(read.query_sequence)
+
         if read.query_sequence is not None and read.cigartuples is not None: # and len(read.query_sequence) > 0.75 * len(ref_str) and read.cigartuples is not None:
             seq, ref, qual, ins = alignment_from_cigar(read.cigartuples, read.query_sequence, ref_str,
                                                        read.query_qualities)
@@ -301,6 +310,7 @@ def get_reads_for_well(parent_name, bam_file_path: str, ref_str: str, msa_path=N
                 insert_map[i].append(insert)
             read_ids.append(f'{read.query_name}')
             read_quals.append(qual)
+            print(qual)
 
     # Check if we want to write a MSA
     if msa_path is not None:
@@ -313,6 +323,7 @@ def get_reads_for_well(parent_name, bam_file_path: str, ref_str: str, msa_path=N
     # Do this for all wells
     seq_df = make_well_df_from_reads(seqs, read_ids, read_quals)
     alignment_count = len(seq_df.values)
+    print('alignment_count: ', alignment_count, len(seqs), len(read_ids))
     if alignment_count > 0:
         rows_all = make_row_from_read_pileup_across_well(seq_df, ref_str, parent_name, insert_map)
         bam.close()
@@ -330,6 +341,8 @@ def make_row_from_read_pileup_across_well(well_df, ref_str, label, insert_map):
     """
     Given a pileup of reads, we want to get some summary information about that sequence
     """
+    print('----- make_row_from_read_pileup_across_well')
+    print(well_df.head())
     rows = []
     for col in well_df:
         vc = well_df[col].values
@@ -407,6 +420,8 @@ def calc_mutation_significance_for_position_in_well(ref_seq, num_a, num_t, num_g
 
 
 def postprocess_variant_df(df, cutoff=5, output_path=None):
+    print('----- gpostprocess_variant_df')
+    print(df.head())
     """
     Postprocess the variant DF to check for any positions that appear to have a higher than expected
     difference to the parent or that occur too many times.
@@ -467,6 +482,8 @@ def get_variant_label_for_well(seq_df, threshold):
     """
     # Now use the filter for wells which have a certain threshold of non-reference mutations
     # Filter based on significance to determine whether there is a
+    print('----- getting label')
+    print(seq_df.head())
     non_refs = seq_df[seq_df['freq_non_ref'] > threshold].sort_values(by='position')
     mixed_well = False
     # Have section for inserts to check if they are > 50% of the reads
