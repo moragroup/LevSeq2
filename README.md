@@ -97,7 +97,7 @@ brew install gcc@13 gcc@14
 
 1. Create and activate conda environment:
    ```bash
-   conda create --name levseq python=3.12 -y
+   conda create --name levseq python=3.12 pip -y 
    conda activate levseq
    ```
 

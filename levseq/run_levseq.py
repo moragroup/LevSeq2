@@ -202,8 +202,19 @@ def filter_bc(cl_args: dict, name_folder: Path, i: int) -> Path:
         raise FileNotFoundError(f"Barcode file not found: {barcode_path}")
     front_prefix = "NB"
     back_prefix = "RB"
-    barcode_path_filter = os.path.join(name_folder, "levseq_barcodes_filtered.fasta")
-    print(f"Filtering barcodes from {barcode_path} to {barcode_path_filter} with front range ({front_min}, {front_max}) and rbc {rbc}")
+    # Namespace the filtered file by the reverse-barcode plate so that
+    # concurrent or repeated calls into the same name_folder cannot silently
+    # clobber each other. The C++ demultiplexer crashes (std::out_of_range)
+    # when the filtered FASTA has no `RB` records, which is exactly what
+    # happens when a later filter_bc() call overwrites an earlier one with
+    # a plate that the user-supplied barcodes.fasta does not contain.
+    barcode_path_filter = os.path.join(
+        name_folder, f"levseq_barcodes_filtered_RB{int(rbc):02d}.fasta"
+    )
+    print(
+        f"Filtering barcodes from {barcode_path} to {barcode_path_filter} "
+        f"with front range ({front_min}, {front_max}) and rbc {rbc}"
+    )
     filter_barcodes(
         str(barcode_path),
         str(barcode_path_filter),
@@ -218,15 +229,34 @@ def filter_bc(cl_args: dict, name_folder: Path, i: int) -> Path:
 def filter_barcodes(input_fasta, output_fasta, barcode_range, rbc, front_prefix, back_prefix):
     front_min, front_max = barcode_range
     filtered_records = []
+    forward_count = 0
+    reverse_count = 0
     for record in SeqIO.parse(input_fasta, "fasta"):
         if (
             record.id.startswith(front_prefix)
             and front_min <= int(record.id[len(front_prefix):]) <= front_max
-        ) or (
+        ):
+            filtered_records.append(record)
+            forward_count += 1
+        elif (
             record.id.startswith(back_prefix)
             and int(record.id[len(back_prefix):]) == rbc
         ):
             filtered_records.append(record)
+            reverse_count += 1
+    if forward_count == 0:
+        raise ValueError(
+            f"No forward ({front_prefix}{front_min}-{front_prefix}{front_max}) "
+            f"barcodes found in {input_fasta}. Cannot demultiplex."
+        )
+    if reverse_count == 0:
+        raise ValueError(
+            f"No reverse barcode {back_prefix}{rbc} found in {input_fasta}. "
+            f"The C++ demultiplexer crashes when the filtered FASTA has no "
+            f"reverse records. Either add {back_prefix}{rbc} to your barcodes "
+            f"file or update the 'barcode_plate' column in your summary CSV "
+            f"to a plate that exists in the barcodes file."
+        )
     with open(output_fasta, "w") as output_handle:
         SeqIO.write(filtered_records, output_handle, "fasta")
 
