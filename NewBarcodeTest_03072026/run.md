@@ -1,0 +1,1 @@
+python -m levseq.cmd plasmida /mnt/storage01/home/amora/code/LevSeq2/NewBarcodeTest_03072026/ /mnt/storage01/home/amora/code/LevSeq2/NewBarcodeTest_03072026/ref_new_barcodes_03072026.csv --barcodes /mnt/storage01/home/amora/code/LevSeq2/NewBarcodeTest_03072026/barcodes.fasta
