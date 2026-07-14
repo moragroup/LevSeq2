@@ -110,6 +110,14 @@ brew install gcc@13 gcc@14
    ```bash
    pip install levseq
    ```
+   or 
+   ```bash
+   git clone git@github.com:moragroup/LevSeq2.git
+   cd LevSeq2
+   python setup.py sdist bdist_wheel
+   pip install dist/*.tar.gz # Whatever version of LevSeq it is currently at
+   ```
+
 
 4. Make bacoddes (see barcodes folder)
    ```
@@ -120,6 +128,10 @@ brew install gcc@13 gcc@14
 5. Run LevSeq:
    ```bash
    levseq my_experiment /path/to/data/ /path/to/ref.csv
+   ```
+   If you use specific barcodes that are new
+   ```bash
+   levseq my_experiment /path/to/data_fastq/ /path/to/ref.csv --barcodes /path/to/barcodes/barcodes.fasta
    ```
 
 6. Combine function data:
