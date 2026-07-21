@@ -9,7 +9,6 @@ conda config --add channels defaults
 conda config --add channels bioconda
 conda config --add channels conda-forge
 conda install viennarna
-conda install -c plotly plotly-orca
 ```
 
 ## Overview
@@ -50,10 +49,10 @@ This is the setup up to cover exactly one plate with 20 primers total. 8 for the
 For example, to make this for the pet22b vector used in the LevSeq paper, we do the following:
 
 python barcode_design_cli.py \
-    --fwd_anchor "CTCGATCCCGCGAAATTAATACG" \
-    --rev_anchor "ATCCGGATATAGTTCCTCCTTTCAG" \
+    --fwd_anchor "ATCTCGATCCCGCGAAATTAATACGACTCAC" \
+    --rev_anchor "GCCCCAAGGGGTTATGCTAGTTATTGCTC" \
     --barcode_len 24 \
-    --num_rb_select 12 \
-    --num_nb_select 8 \
-    --outdir "barcode_design_pet22b_T7" \
-    --name "barcode_T7_pet22b_pool"
+    --num_rb_select 96 \
+    --num_nb_select 96 \
+    --outdir "barcode_design_pet22b_T7_96" \
+    --name "barcode_T7_pet22b_pool_96"
